@@ -1,0 +1,385 @@
+services:
+  # ============================================
+  # DATABASES
+  # ============================================
+  mysql:
+    image: mysql:8.0
+    container_name: careforall-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass123
+      MYSQL_DATABASE: careforall
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./infrastructure/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3307:3306"
+    networks:
+      - careforall-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpass123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # MESSAGE BROKER
+  # ============================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: careforall-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - careforall-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: careforall-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - careforall-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # ============================================
+  # MICROSERVICES
+  # ============================================
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: careforall-api-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - AUTH_SERVICE_URL=http://auth-service:4001
+      - CAMPAIGN_SERVICE_URL=http://campaign-service:4002
+      - PLEDGE_SERVICE_URL=http://pledge-service:4003
+      - PAYMENT_SERVICE_URL=http://payment-service:4004
+      - TOTALS_SERVICE_URL=http://totals-service:4005
+      - NOTIFICATION_SERVICE_URL=http://notification-service:4006
+      - ADMIN_SERVICE_URL=http://admin-service:4007
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    depends_on:
+      - auth-service
+      - campaign-service
+      - pledge-service
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+  auth-service:
+    build: ./services/auth-service
+    container_name: careforall-auth-service
+    ports:
+      - "4001:4001"
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=careforall_auth
+      - DB_USER=root
+      - DB_PASSWORD=rootpass123
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - JWT_EXPIRY=24h
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - ELASTICSEARCH_HOST=http://elasticsearch:9200
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+  campaign-service:
+    build: ./services/campaign-service
+    container_name: careforall-campaign-service
+    ports:
+      - "4002:4002"
+    environment:
+      - NODE_ENV=production
+      - PORT=4002
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=careforall_campaigns
+      - DB_USER=root
+      - DB_PASSWORD=rootpass123
+      - KAFKA_BROKERS=kafka:9092
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - ELASTICSEARCH_HOST=http://elasticsearch:9200
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+  pledge-service:
+    build: ./services/pledge-service
+    ports:
+      - "4003:4003"
+    environment:
+      - NODE_ENV=production
+      - PORT=4003
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=careforall_pledges
+      - DB_USER=root
+      - DB_PASSWORD=rootpass123
+      - KAFKA_BROKERS=kafka:9092
+      - AUTH_SERVICE_URL=http://auth-service:4001
+      - PAYMENT_SERVICE_URL=http://payment-service:4004
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - ELASTICSEARCH_HOST=http://elasticsearch:9200
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+  payment-service:
+    build: ./services/payment-service
+    container_name: careforall-payment-service
+    ports:
+      - "4004:4004"
+    environment:
+      - NODE_ENV=production
+      - PORT=4004
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=careforall_payments
+      - DB_USER=root
+      - DB_PASSWORD=rootpass123
+      - KAFKA_BROKERS=kafka:9092
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - ELASTICSEARCH_HOST=http://elasticsearch:9200
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+  totals-service:
+    build: ./services/totals-service
+    container_name: careforall-totals-service
+    ports:
+      - "4005:4005"
+    environment:
+      - NODE_ENV=production
+      - PORT=4005
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=careforall_totals
+      - DB_USER=root
+      - DB_PASSWORD=rootpass123
+      - KAFKA_BROKERS=kafka:9092
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - ELASTICSEARCH_HOST=http://elasticsearch:9200
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+  notification-service:
+    build: ./services/notification-service
+    container_name: careforall-notification-service
+    ports:
+      - "4006:4006"
+    environment:
+      - NODE_ENV=production
+      - PORT=4006
+      - KAFKA_BROKERS=kafka:9092
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - ELASTICSEARCH_HOST=http://elasticsearch:9200
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+  admin-service:
+    build: ./services/admin-service
+    container_name: careforall-admin-service
+    ports:
+      - "4007:4007"
+    environment:
+      - NODE_ENV=production
+      - PORT=4007
+      - CAMPAIGN_SERVICE_URL=http://campaign-service:4002
+      - PLEDGE_SERVICE_URL=http://pledge-service:4003
+      - PAYMENT_SERVICE_URL=http://payment-service:4004
+      - TOTALS_SERVICE_URL=http://totals-service:4005
+      - AUTH_SERVICE_URL=http://auth-service:4001
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - ELASTICSEARCH_HOST=http://elasticsearch:9200
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+  chat-service:
+    build: ./services/chat-service
+    container_name: careforall-chat-service
+    ports:
+      - "4008:4008"
+    environment:
+      - NODE_ENV=production
+      - PORT=4008
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+  # ============================================
+  # OBSERVABILITY - TRACING
+  # ============================================
+  jaeger:
+    image: jaegertracing/all-in-one:1.51
+    container_name: careforall-jaeger
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Collector HTTP
+      - "14250:14250"  # Collector gRPC
+      - "9411:9411"
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+  # ============================================
+  # OBSERVABILITY - LOGGING (ELK Stack)
+  # ============================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: careforall-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - careforall-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: careforall-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+  # ============================================
+  # OBSERVABILITY - METRICS (Already configured)
+  # ============================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: careforall-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: careforall-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+  # Loki (already configured)
+  loki:
+    image: grafana/loki:latest
+    container_name: careforall-loki
+    user: root
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - careforall-network
+    restart: unless-stopped
+
+networks:
+  careforall-network:
+    driver: bridge
+    name: careforall-network
+
+volumes:
+  mysql_data:
+  kafka_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  elasticsearch_data:

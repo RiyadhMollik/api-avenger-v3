@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - CareForAll</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f7fa;
+    }
+
+    .navbar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .navbar h1 {
+      font-size: 1.5rem;
+    }
+
+    .navbar .admin-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: calc(100vh - 70px);
+    }
+
+    .sidebar {
+      background: white;
+      padding: 2rem 0;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+    }
+
+    .sidebar-item {
+      padding: 1rem 2rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .sidebar-item:hover {
+      background: #f0f0f0;
+    }
+
+    .sidebar-item.active {
+      background: #667eea;
+      color: white;
+      border-right: 4px solid #764ba2;
+    }
+
+    .main-content {
+      padding: 2rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .stat-card h3 {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .stat-card .change {
+      font-size: 0.85rem;
+      color: #10b981;
+      margin-top: 0.5rem;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      margin-bottom: 2rem;
+    }
+
+    .card h2 {
+      margin-bottom: 1.5rem;
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table th {
+      background: #f8f9fa;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #666;
+    }
+
+    table td {
+      padding: 1rem;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    table tr:hover {
+      background: #f8f9fa;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-sm {
+      padding: 0.3rem 0.8rem;
+      font-size: 0.85rem;
+    }
+
+    .search-box {
+      margin-bottom: 1.5rem;
+    }
+
+    .search-box input {
+      width: 100%;
+      max-width: 400px;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 0.9rem;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 10px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .close-modal {
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #999;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 0.9rem;
+    }
+
+    .chat-container {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 1.5rem;
+      height: calc(100vh - 200px);
+    }
+
+    .chat-users {
+      background: white;
+      border-radius: 10px;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .chat-user {
+      padding: 1rem;
+      border-bottom: 1px solid #e9ecef;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .chat-user:hover {
+      background: #f8f9fa;
+    }
+
+    .chat-user.active {
+      background: #667eea;
+      color: white;
+    }
+
+    .chat-box {
+      background: white;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .message {
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 1rem;
+    }
+
+    .message.admin {
+      flex-direction: row-reverse;
+    }
+
+    .message-bubble {
+      max-width: 60%;
+      padding: 1rem;
+      border-radius: 10px;
+      background: #f0f0f0;
+    }
+
+    .message.admin .message-bubble {
+      background: #667eea;
+      color: white;
+    }
+
+    .chat-input {
+      display: flex;
+      gap: 1rem;
+      padding: 1.5rem;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .badge-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .badge-warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .transaction-history {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <h1>🛡️ Admin Dashboard</h1>
+    <div class="admin-info">
+      <span>Admin: <strong>John Doe</strong></span>
+      <button class="btn btn-sm btn-danger">Logout</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="sidebar">
+      <div class="sidebar-item active" onclick="showSection('dashboard')">
+        📊 Dashboard
+      </div>
+      <div class="sidebar-item" onclick="showSection('users')">
+        👥 Manage Users
+      </div>
+      <div class="sidebar-item" onclick="showSection('balance')">
+        💰 Manage Balance
+      </div>
+      <div class="sidebar-item" onclick="showSection('chat')">
+        💬 Chat with Users
+      </div>
+      <div class="sidebar-item" onclick="showSection('transactions')">
+        📈 Transactions
+      </div>
+    </div>
+
+    <div class="main-content">
+      <!-- Dashboard Section -->
+      <div id="dashboard" class="section active">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Total Users</h3>
+            <div class="value" id="totalUsers">0</div>
+            <div class="change">↑ 12% from last month</div>
+          </div>
+          <div class="stat-card">
+            <h3>Active Campaigns</h3>
+            <div class="value" id="activeCampaigns">0</div>
+            <div class="change">↑ 8% from last month</div>
+          </div>
+          <div class="stat-card">
+            <h3>Total Donations</h3>
+            <div class="value" id="totalDonations">$0</div>
+            <div class="change">↑ 23% from last month</div>
+          </div>
+          <div class="stat-card">
+            <h3>Pending Verifications</h3>
+            <div class="value" id="pendingVerifications">0</div>
+            <div class="change">Processing...</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Recent Activity</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>User</th>
+                <th>Action</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody id="recentActivity">
+              <tr>
+                <td>2 mins ago</td>
+                <td>John Smith</td>
+                <td>Donated to Campaign #123</td>
+                <td>$50.00</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Users Section -->
+      <div id="users" class="section">
+        <div class="card">
+          <h2>User Management</h2>
+          <div class="search-box">
+            <input type="text" placeholder="Search users..." id="userSearch" onkeyup="searchUsers()">
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Balance</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTable">
+              <!-- Users will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Balance Management Section -->
+      <div id="balance" class="section">
+        <div class="card">
+          <h2>Balance Management</h2>
+          <button class="btn btn-primary" onclick="openAddBalanceModal()">💰 Add Balance to User</button>
+          
+          <div style="margin-top: 2rem;">
+            <h3>Recent Balance Changes</h3>
+            <div class="transaction-history" id="balanceHistory">
+              <!-- Balance history will be loaded here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Section -->
+      <div id="chat" class="section">
+        <div class="chat-container">
+          <div class="chat-users" id="chatUsersList">
+            <h3 style="margin-bottom: 1rem;">Active Chats</h3>
+            <!-- Chat users will be loaded here -->
+          </div>
+          
+          <div class="chat-box">
+            <div class="chat-header">
+              <h3 id="currentChatUser">Select a user to start chatting</h3>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+              <!-- Chat messages will appear here -->
+            </div>
+            <div class="chat-input">
+              <input type="text" id="messageInput" placeholder="Type your message..." onkeypress="handleChatKeypress(event)">
+              <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transactions Section -->
+      <div id="transactions" class="section">
+        <div class="card">
+          <h2>All Transactions</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>User</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="transactionsTable">
+              <!-- Transactions will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Balance Modal -->
+  <div id="addBalanceModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add Balance to User</h2>
+        <span class="close-modal" onclick="closeAddBalanceModal()">&times;</span>
+      </div>
+      <form id="addBalanceForm">
+        <div class="form-group">
+          <label>Select User</label>
+          <select id="balanceUserId" required>
+            <option value="">-- Select User --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Amount (BDT)</label>
+          <input type="number" id="balanceAmount" min="1" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Reason</label>
+          <textarea id="balanceReason" rows="3" placeholder="Enter reason for adding balance"></textarea>
+        </div>
+        <button type="submit" class="btn btn-success">Add Balance</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div id="editUserModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Edit User</h2>
+        <span class="close-modal" onclick="closeEditUserModal()">&times;</span>
+      </div>
+      <form id="editUserForm">
+        <input type="hidden" id="editUserId">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="editUserName" required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="editUserEmail" required>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="editUserStatus">
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let users = [];
+    let currentChatUserId = null;
+    let chatMessages = {};
+
+    // Initialize dashboard
+    async function initDashboard() {
+      await loadStats();
+      await loadUsers();
+      await loadTransactions();
+      loadChatUsers();
+    }
+
+    // Load statistics
+    async function loadStats() {
+      try {
+        // In real implementation, fetch from API
+        document.getElementById('totalUsers').textContent = '1,234';
+        document.getElementById('activeCampaigns').textContent = '45';
+        document.getElementById('totalDonations').textContent = '$125,450';
+        document.getElementById('pendingVerifications').textContent = '12';
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    // Load users
+    async function loadUsers() {
+      try {
+        // Simulated data - replace with actual API call
+        users = [
+          { id: 1, name: 'Alice Johnson', email: 'alice@example.com', balance: 500.00, status: 'active' },
+          { id: 2, name: 'Bob Smith', email: 'bob@example.com', balance: 1200.50, status: 'active' },
+          { id: 3, name: 'Carol White', email: 'carol@example.com', balance: 0.00, status: 'pending' },
+          { id: 4, name: 'David Brown', email: 'david@example.com', balance: 750.25, status: 'active' },
+        ];
+
+        renderUsers();
+        populateUserSelects();
+      } catch (error) {
+        console.error('Error loading users:', error);
+      }
+    }
+
+    // Render users table
+    function renderUsers(filteredUsers = users) {
+      const tbody = document.getElementById('usersTable');
+      tbody.innerHTML = filteredUsers.map(user => `
+        <tr>
+          <td>${user.id}</td>
+          <td>${user.name}</td>
+          <td>${user.email}</td>
+          <td>৳${user.balance.toFixed(2)}</td>
+          <td><span class="badge badge-${user.status === 'active' ? 'success' : user.status === 'pending' ? 'warning' : 'danger'}">${user.status}</span></td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="editUser(${user.id})">Edit</button>
+            <button class="btn btn-sm btn-success" onclick="quickAddBalance(${user.id})">Add Balance</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Search users
+    function searchUsers() {
+      const query = document.getElementById('userSearch').value.toLowerCase();
+      const filtered = users.filter(user => 
+        user.name.toLowerCase().includes(query) || 
+        user.email.toLowerCase().includes(query)
+      );
+      renderUsers(filtered);
+    }
+
+    // Populate user select dropdowns
+    function populateUserSelects() {
+      const select = document.getElementById('balanceUserId');
+      select.innerHTML = '<option value="">-- Select User --</option>' + 
+        users.map(user => `<option value="${user.id}">${user.name} (${user.email})</option>`).join('');
+    }
+
+    // Load transactions
+    async function loadTransactions() {
+      const tbody = document.getElementById('transactionsTable');
+      // Simulated data
+      const transactions = [
+        { id: 'TXN001', user: 'Alice Johnson', type: 'Donation', amount: 50.00, status: 'completed', date: '2025-11-21 10:30' },
+        { id: 'TXN002', user: 'Bob Smith', type: 'Donation', amount: 100.00, status: 'completed', date: '2025-11-21 09:15' },
+        { id: 'TXN003', user: 'Carol White', type: 'Refund', amount: 25.00, status: 'pending', date: '2025-11-21 08:45' },
+      ];
+
+      tbody.innerHTML = transactions.map(tx => `
+        <tr>
+          <td>${tx.id}</td>
+          <td>${tx.user}</td>
+          <td>${tx.type}</td>
+          <td>৳${tx.amount.toFixed(2)}</td>
+          <td><span class="badge badge-${tx.status === 'completed' ? 'success' : 'warning'}">${tx.status}</span></td>
+          <td>${tx.date}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Load chat users
+    function loadChatUsers() {
+      const container = document.getElementById('chatUsersList');
+      const chatUsers = users.filter(u => u.status === 'active');
+      
+      container.innerHTML = '<h3 style="margin-bottom: 1rem;">Active Chats</h3>' +
+        chatUsers.map(user => `
+          <div class="chat-user ${currentChatUserId === user.id ? 'active' : ''}" onclick="selectChatUser(${user.id})">
+            <strong>${user.name}</strong>
+            <div style="font-size: 0.85rem; color: #999;">Click to chat</div>
+          </div>
+        `).join('');
+    }
+
+    // Select chat user
+    function selectChatUser(userId) {
+      currentChatUserId = userId;
+      const user = users.find(u => u.id === userId);
+      document.getElementById('currentChatUser').textContent = user.name;
+      
+      loadChatMessages(userId);
+      loadChatUsers(); // Refresh to update active state
+    }
+
+    // Load chat messages
+    function loadChatMessages(userId) {
+      const container = document.getElementById('chatMessages');
+      
+      if (!chatMessages[userId]) {
+        chatMessages[userId] = [
+          { sender: 'user', text: 'Hello, I need help with my account', time: '10:30 AM' },
+          { sender: 'admin', text: 'Hi! How can I assist you today?', time: '10:31 AM' },
+        ];
+      }
+
+      container.innerHTML = chatMessages[userId].map(msg => `
+        <div class="message ${msg.sender}">
+          <div class="message-bubble">
+            <div>${msg.text}</div>
+            <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.5rem;">${msg.time}</div>
+          </div>
+        </div>
+      `).join('');
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Send message
+    function sendMessage() {
+      if (!currentChatUserId) {
+        alert('Please select a user to chat with');
+        return;
+      }
+
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+      
+      if (!text) return;
+
+      const now = new Date();
+      const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+      if (!chatMessages[currentChatUserId]) {
+        chatMessages[currentChatUserId] = [];
+      }
+
+      chatMessages[currentChatUserId].push({
+        sender: 'admin',
+        text: text,
+        time: time
+      });
+
+      input.value = '';
+      loadChatMessages(currentChatUserId);
+
+      // Simulate user response after 2 seconds
+      setTimeout(() => {
+        chatMessages[currentChatUserId].push({
+          sender: 'user',
+          text: 'Thank you for your help!',
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        });
+        if (currentChatUserId) {
+          loadChatMessages(currentChatUserId);
+        }
+      }, 2000);
+    }
+
+    // Handle chat keypress
+    function handleChatKeypress(event) {
+      if (event.key === 'Enter') {
+        sendMessage();
+      }
+    }
+
+    // Show section
+    function showSection(sectionId) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+      
+      document.getElementById(sectionId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // Add balance modal
+    function openAddBalanceModal() {
+      document.getElementById('addBalanceModal').classList.add('active');
+    }
+
+    function closeAddBalanceModal() {
+      document.getElementById('addBalanceModal').classList.remove('active');
+      document.getElementById('addBalanceForm').reset();
+    }
+
+    function quickAddBalance(userId) {
+      document.getElementById('balanceUserId').value = userId;
+      openAddBalanceModal();
+    }
+
+    // Edit user modal
+    function editUser(userId) {
+      const user = users.find(u => u.id === userId);
+      document.getElementById('editUserId').value = user.id;
+      document.getElementById('editUserName').value = user.name;
+      document.getElementById('editUserEmail').value = user.email;
+      document.getElementById('editUserStatus').value = user.status;
+      document.getElementById('editUserModal').classList.add('active');
+    }
+
+    function closeEditUserModal() {
+      document.getElementById('editUserModal').classList.remove('active');
+    }
+
+    // Form submissions
+    document.getElementById('addBalanceForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const userId = document.getElementById('balanceUserId').value;
+      const amount = parseFloat(document.getElementById('balanceAmount').value);
+      const reason = document.getElementById('balanceReason').value;
+
+      try {
+        // In real implementation, call API
+        const user = users.find(u => u.id == userId);
+        user.balance += amount;
+        
+        alert(`Successfully added ৳${amount.toFixed(2)} to ${user.name}'s account`);
+        closeAddBalanceModal();
+        renderUsers();
+      } catch (error) {
+        alert('Error adding balance: ' + error.message);
+      }
+    });
+
+    document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const userId = document.getElementById('editUserId').value;
+      const name = document.getElementById('editUserName').value;
+      const email = document.getElementById('editUserEmail').value;
+      const status = document.getElementById('editUserStatus').value;
+
+      try {
+        // In real implementation, call API
+        const user = users.find(u => u.id == userId);
+        user.name = name;
+        user.email = email;
+        user.status = status;
+        
+        alert('User updated successfully');
+        closeEditUserModal();
+        renderUsers();
+      } catch (error) {
+        alert('Error updating user: ' + error.message);
+      }
+    });
+
+    // Initialize on page load
+    window.onload = initDashboard;
+  </script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Successful - CareForAll</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      min-height: 100vh; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 60px 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    .success-icon {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: #4caf50;
+      margin: 0 auto 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: scaleIn 0.5s ease-out;
+    }
+    .success-icon svg {
+      width: 60px;
+      height: 60px;
+      stroke: white;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      animation: checkmark 0.8s ease-out 0.3s forwards;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+    }
+    @keyframes scaleIn {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+    @keyframes checkmark {
+      to { stroke-dashoffset: 0; }
+    }
+    h1 {
+      color: #4caf50;
+      font-size: 36px;
+      margin-bottom: 15px;
+    }
+    .message {
+      color: #666;
+      font-size: 18px;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    .details {
+      background: #f5f5f5;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+      text-align: left;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #ddd;
+    }
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+    .detail-label {
+      color: #666;
+      font-weight: 500;
+    }
+    .detail-value {
+      color: #333;
+      font-weight: 600;
+    }
+    .btn {
+      display: inline-block;
+      padding: 15px 40px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+      border: none;
+      cursor: pointer;
+      margin: 5px;
+    }
+    .btn:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="success-icon">
+      <svg viewBox="0 0 52 52">
+        <path d="M14 27l8 8 16-16"/>
+      </svg>
+    </div>
+    
+    <h1>Payment Successful!</h1>
+    <p class="message">
+      Thank you for your generous donation. Your payment has been processed successfully.
+    </p>
+    
+    <div class="details">
+      <div class="detail-row">
+        <span class="detail-label">Transaction ID:</span>
+        <span class="detail-value" id="transactionId">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Amount:</span>
+        <span class="detail-value" id="amount">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Status:</span>
+        <span class="detail-value" style="color: #4caf50;">Success</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Date:</span>
+        <span class="detail-value" id="date">-</span>
+      </div>
+    </div>
+    
+    <div>
+      <a href="/" class="btn">Back to Home</a>
+      <button onclick="window.print()" class="btn btn-secondary">Print Receipt</button>
+    </div>
+  </div>
+
+  <script>
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const transaction = urlParams.get('transaction');
+    const amount = urlParams.get('amount');
+    
+    // Display payment details
+    if (transaction) {
+      document.getElementById('transactionId').textContent = transaction;
+    }
+    if (amount) {
+      document.getElementById('amount').textContent = 'BDT ' + parseFloat(amount).toFixed(2);
+    }
+    document.getElementById('date').textContent = new Date().toLocaleString();
+    
+    // Redirect to home after 10 seconds
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 10000);
+  </script>
+</body>
+</html>

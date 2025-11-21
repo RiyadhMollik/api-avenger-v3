@@ -1,0 +1,72 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'careforall-monitoring'
+
+scrape_configs:
+  # API Gateway
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:4000']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # Auth Service
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service:4001']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # Campaign Service
+  - job_name: 'campaign-service'
+    static_configs:
+      - targets: ['campaign-service:4002']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # Pledge Service (CRITICAL)
+  - job_name: 'pledge-service'
+    static_configs:
+      - targets: ['pledge-service:4003']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # Payment Service (CRITICAL)
+  - job_name: 'payment-service'
+    static_configs:
+      - targets: ['payment-service:4004']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # Totals Service
+  - job_name: 'totals-service'
+    static_configs:
+      - targets: ['totals-service:4005']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # Admin Service
+  - job_name: 'admin-service'
+    static_configs:
+      - targets: ['admin-service:4006']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # Notification Service
+  - job_name: 'notification-service'
+    static_configs:
+      - targets: ['notification-service:4007']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Loki
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']

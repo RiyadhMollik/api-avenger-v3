@@ -1,0 +1,159 @@
+{
+  "dashboard": {
+    "title": "Payment Service - Monitoring Dashboard",
+    "tags": ["payment", "careforall", "transactions"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Total Payments",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "refId": "A",
+            "metrics": [{"type": "count", "id": "1"}],
+            "bucketAggs": [],
+            "query": "service:payment-service AND message:*Payment created*"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Successful Payments",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+        "targets": [
+          {
+            "refId": "A",
+            "metrics": [{"type": "count", "id": "1"}],
+            "bucketAggs": [],
+            "query": "service:payment-service AND message:*captured successfully*"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Failed Payments",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+        "targets": [
+          {
+            "refId": "A",
+            "metrics": [{"type": "count", "id": "1"}],
+            "bucketAggs": [],
+            "query": "service:payment-service AND (message:*failed* OR message:*error*)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "red", "value": 1}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Payment Volume Over Time",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 4},
+        "targets": [
+          {
+            "refId": "A",
+            "metrics": [{"type": "count", "id": "1"}],
+            "bucketAggs": [
+              {"type": "date_histogram", "field": "@timestamp", "id": "2", "settings": {"interval": "auto"}}
+            ],
+            "query": "service:payment-service AND message:*Payment created*"
+          }
+        ],
+        "yaxes": [
+          {"label": "Payments", "show": true},
+          {"show": true}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Payment Status Distribution",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "targets": [
+          {
+            "refId": "A",
+            "metrics": [{"type": "count", "id": "1"}],
+            "bucketAggs": [
+              {"type": "terms", "field": "newStatus.keyword", "id": "2", "settings": {"size": "10"}}
+            ],
+            "query": "service:payment-service AND _exists_:newStatus"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Recent Payment Events",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "targets": [
+          {
+            "refId": "A",
+            "metrics": [{"type": "logs", "id": "1"}],
+            "bucketAggs": [],
+            "query": "service:payment-service"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Payment Errors Timeline",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 24, "x": 0, "y": 20},
+        "targets": [
+          {
+            "refId": "A",
+            "metrics": [{"type": "count", "id": "1"}],
+            "bucketAggs": [
+              {"type": "date_histogram", "field": "@timestamp", "id": "2", "settings": {"interval": "auto"}}
+            ],
+            "query": "service:payment-service AND level:ERROR"
+          }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [5], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ]
+        }
+      }
+    ],
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "5s"
+  },
+  "overwrite": true
+}

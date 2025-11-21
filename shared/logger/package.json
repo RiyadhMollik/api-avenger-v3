@@ -1,0 +1,9 @@
+{
+  "name": "@careforall/logger",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "winston": "^3.11.0",
+    "winston-elasticsearch": "^0.17.4"
+  }
+}

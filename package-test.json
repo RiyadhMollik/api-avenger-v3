@@ -1,0 +1,16 @@
+{
+  "name": "careforall-integration-tests",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "jest --detectOpenHandles",
+    "test:integration": "jest __tests__/integration.test.js --detectOpenHandles --runInBand"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "axios": "^1.6.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 20000
+  }
+}
